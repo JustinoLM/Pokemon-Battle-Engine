@@ -1,17 +1,12 @@
 #tests/unit/test_status_changes.py
 
-from src.pokemon_battle_engine.domain.models import (
-    Type, Move, PhysicalDamageCalculator,  StatusDamageCalculator,
-    ModifyStage
-    )
+from src.pokemon_battle_engine.domain.models import (Type, Move, ModifyStage)
+from src.pokemon_battle_engine.domain.damage import (
+    PhysicalDamageCalculator, StatusDamageCalculator,
+)
 
 from src.pokemon_battle_engine.domain.constants import (
-    TYPE_CHART, STAGE_MULTIPLIERS,
-	FAIRY_TYPE, FIRE_TYPE, FIGHTING_TYPE, FLYING_TYPE,
-	BUG_TYPE, DARK_TYPE, DRAGON_TYPE, ELECTRIC_TYPE,
-	GHOST_TYPE, GRASS_TYPE,GROUND_TYPE, ICE_TYPE,
-	NORMAL_TYPE, POISON_TYPE, PSYCHIC_TYPE, ROCK_TYPE,
-	STEEL_TYPE, WATER_TYPE
+    NORMAL_TYPE
     )
 
 def test_move_with_stage_change(charmander):

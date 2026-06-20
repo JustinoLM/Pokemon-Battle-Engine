@@ -1,4 +1,3 @@
-
 # Pokemon Battle Engine
 
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg)
@@ -6,49 +5,53 @@
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)
 ![MyPy](https://img.shields.io/badge/mypy-strict-success.svg)
 
-A professional Python implementation of the Generation 1 Pokemon battle system, built with strict typing, SOLID principles, and test-driven development. This engine serves as a robust domain model for future expansion into competitive battle simulation.
+A professional Python implementation of the Pokemon battle system, evolved into a production-ready **REST API**. Built with strict typing, SOLID principles, async I/O, and comprehensive observability. This engine serves as a robust foundation for competitive battle simulation and backend services.
 
-##  Features
+## Features
 
-This engine implements a complete battle loop with attention to mechanical detail:
+This engine implements a complete battle loop and exposes it via a modern API, with attention to mechanical detail and operational excellence:
 
+### Core Battle Mechanics
 - **Advanced Damage Calculation:**
-  - Damage formula including STAB (Same Type Attack Bonus) and Type Effectiveness.
+  - Full damage formula including STAB, Type Effectiveness (18x18 matrix), and Critical Hits.
+  - **Field Conditions:** Dynamic Weather (Rain, Sun, Sandstorm, Hail) and Terrain (Electric, Grassy, Psychic, Misty) affecting damage and status.
+  - **Hazards:** Entry hazard layer logic (Spikes, Stealth Rock, Toxic Spikes) with switch-in damage calculation.
+  - **Complex Items:** Logic for Knock Off, Trick, Covert Cloak, Loaded Dice, Weakness Policy, and Life Orb recoil.
+  - **Substitute System:** Damage absorption, sound move piercing, and HP drain.
+  - **Volatile Status:** Taunt, Encore, Torment, Confusion (self-damage), Attract, and Flinch logic with turn-based decay.
 
-  - Full 18x18 type chart matrix implementation.
-  - **Critical Hits:** Implements logic to ignore negative user stat drops and positive opponent stat boosts. Includes support for the "Sniper" ability (2.25x damage).
-  - Status penalties (e.g., Burn halves physical attack).
+### Modern API & Infrastructure
+- **FastAPI Backend:**
+  - Async endpoints for Battle Creation (`POST /battles`), Turn Execution (`POST /battles/{id}/turn`), and State Retrieval (`GET /battles/{id}`).
+  - **Pydantic Schemas:** Strict separation between Domain Models and API DTOs.
+  - **Error Handling:** Custom exception hierarchy mapped to standard HTTP status codes (400, 404, 409).
+- **External Integration:**
+  - **PokeAPI Client:** Async client to fetch real-time Pokemon stats, types, and base data.
+- **Observability (Ops Ready):**
+  - **Structured Logging:** JSON-formatted logs using `structlog` for production monitoring and analysis.
+  - **Request Tracing:** Unique Request IDs injected via Middleware for distributed tracing context.
+  - **Operational Runbook:** Documented procedures for Tmux session management, process monitoring (`htop`), and troubleshooting (`lsof`, `curl`).
 
-- **Comprehensive Battle System:**
-  - **Turn Order:** Based on Move Priority and Speed stat.
-  - **Stat Stages:** Full support for stat modifiers (Atk, Def, SpA, SpD, Spe, Acc, Eva) ranging from -6 to +6 with correct multipliers.
-  - **End-of-Turn Processing:** Handles residual damage from Burns, Poison, and Badly Poisoned (Toxic).
+### Clean Architecture
+- **Pure Domain:** Core logic is free of I/O (prints/files), relying on message passing and dependency injection.
+- **SOLID Principles:** Strategy Pattern for Damage Calculators and Status Effects; Composition over Inheritance.
+- **Type Safety:** 100% type-hinted code passing `mypy --strict`.
 
-- **Status Conditions:**
-  - **Non-Volatile:** Burn, Paralysis, Sleep, Freeze, Poison, Badly Poisoned.
-  - **Mechanics:** Includes type immunities (e.g., Fire immune to Burn), movement prevention (Paralysis, Sleep, Freeze), and wake-up/thaw probabilities.
-  - **Secondary Effects:** Moves can trigger status conditions with configurable probabilities.
+## Project Progress
 
-- **Clean Architecture:**
-  - **Pure Domain:** Core logic is free of I/O (prints/files), relying on message passing for logging.
-  - **SOLID Principles:** Uses Strategy Pattern for Damage Calculators and Status Effects.
-  - **Type Safety:** 100% type-hinted code passing `mypy --strict`.
-  
-##  Week 1 Progress
-
+### Week 1: Domain Model & Core Engine
 * Pure Domain Model with Composition over Inheritance.
 * Full Type Chart and Effectiveness Logic.
 * Damage Calculation (Physical, Special, Status).
-*  Status Conditions & End-of-Turn Ticks.
+* Status Conditions (Burn, Poison, Paralysis, etc.) & End-of-Turn Ticks.
 * Critical Hit Mechanics (w/ Stat Ignoring).
-*  Stage Changes (Swords Dance, etc.).
+* Stage Changes (Swords Dance, etc.).
+* Multi-hit Moves & Item Interactions.
 
-## Future-Proofing (Scaffolding)
-
-The data model is architected for seamless future expansion. The following structures are already in place to support upcoming features:
-- **Abilities & Items:** Fields reserved for item and ability logic.
-- **Movepools:** Support for assigning specific move lists to individual Pokemon.
-- **Genetics:** IVs (Individual Values) structure ready for stat customization.
+### Week 2: API & Operational Excellence
+* **FastAPI Server:** Creation of RESTful endpoints with Pydantic validation.
+* **Async I/O:** Implementation of `PokeAPIClient` for non-blocking data fetching.
+* **Structured Logging:** Configuration of `structlog` for JSON output and file rotation.
 
 ## Installation
 
@@ -58,62 +61,68 @@ This project uses `uv` for lightning-fast dependency management.
 # Install dependencies
 uv sync
 
+# Run the API Server
+uv run uvicorn pokemon_battle_engine.api.main:app --reload
+
 # Run tests
 make test
 
 # Lint and Type Check
 make lint
-
-# Run a battle demo
-make run
 ```
 
 ## Architecture
 
 The project follows a strict `src` layout to enforce separation of concerns:
 
-*   `src/pokemon_battle_engine/domain/models.py`: Core entities (`Pokemon`, `Move`, `Type`) and Strategy patterns (`DamageCalculator`, `StatusEffect`).
-
-*   `src/pokemon_battle_engine/domain/constants.py`: Static data definitions (Type Charts, Multipliers, Type Singletons).
-
-*   `src/pokemon_battle_engine/domain/battle.py`: The Mediator pattern orchestrating the fight, turn order, and state transitions.
-
-*   `src/pokemon_battle_engine/main.py`: A simulation demo showing random combat scenarios.
+*   `src/pokemon_battle_engine/domain/models.py`: Core entities (`Pokemon`, `Move`, `Type`), Strategy patterns, and advanced mechanics (Hazards, Weather).
+*   `src/pokemon_battle_engine/domain/constants.py`: Static data definitions (Type Charts, Weather/Terrain configurations).
+*   `src/pokemon_battle_engine/domain/battle.py`: The Mediator pattern orchestrating the fight, turn order, and complex state transitions.
+*   `src/pokemon_battle_engine/api/main.py`: FastAPI application, exception handlers, and middleware for logging.
+*   `src/pokemon_battle_engine/infra/`: Infrastructure layer (PokeAPI client, Logging configuration).
+*   `Deployment Runbook.md`: Operational guide for running and monitoring the server on Linux.
 
 ## Tech Stack
 
 *   **Python 3.11+**
+*   **Web Framework:** FastAPI (Async), Uvicorn.
+*   **External Data:** PokeAPI (Async Client), httpx.
+*   **Observability:** Structlog, Python Logging.
 *   **Type Checking:** `mypy --strict`
 *   **Testing:** `pytest` with fixtures and parametrize.
 *   **Quality:** `ruff` for linting.
 *   **Management:** `uv`
 
-## Run a Demo
+## Quick Start
 
-To see a random battle simulation featuring mechanics like Critical Hits, Stat Boosts, and Status Effects:
-
+### 1. Start the Server
 ```bash
-uv run python src/pokemon_battle_engine/main.py
+uv run uvicorn pokemon_battle_engine.api.main:app --reload
+```
+Access the interactive documentation at **http://127.0.0.1:8000/docs**.
+
+### 2. Create a Battle (via cURL)
+```bash
+curl -X POST http://127.0.0.1:8000/battles \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trainer1": {"name": "Ash", "team": ["pikachu"]},
+    "trainer2": {"name": "Gary", "team": ["blastoise"]}
+  }'
 ```
 
-¡Increíble! Has alcanzado la **Cobertura del 100%** y el tipado estricto sin errores (`mypy --strict`). Eso es el estándar de oro para proyectos Python profesionales.
-
-Para reflejar este logro en tu `README.md`, te sugiero agregar una sección de **"Quality Assurance" (Aseguramiento de Calidad)**. Esto demuestra a cualquier reclutador o usuario que el código no solo funciona, sino que es robusto y mantenible.
-
-Agrega esta sección justo después de "Architecture" o antes de "Run a Demo".
+### 3. Monitor Logs
+```bash
+tail -f logs/battle.log
+```
 
 ## Quality Assurance
 
 This project adheres to strict engineering standards to ensure reliability and maintainability.
 
-- **100% Domain Test Coverage:** Every line of the domain logic (`models`, `battle`, `constants`) is covered by unit tests. This includes complex mechanics like critical hit stat ignoring, status effect immunities, and multi-stage stat modifications.
-
 - **Strict Type Safety:** The entire domain layer passes `mypy --strict`, ensuring type correctness at compile time and preventing a wide class of runtime errors.
-
-- **Comprehensive Testing Strategy:**
-    - **Fixtures & Factories:** Reusable test data setup for consistent test environments.
-    - **Mocking:** Used effectively to isolate randomness (e.g., critical hits, status proc chances) and test edge cases deterministically.
-    - **TDD Approach:** Features are developed and tested incrementally.
+- **Clean Architecture:** clear separation between Domain (Business Logic), API (Interface), and Infrastructure (External I/O).
+- **Operational Readiness:** Includes logging strategies and process management guides suitable for production environments.
 
 **Running the Quality Suite:**
 
@@ -122,10 +131,7 @@ To verify the code quality yourself, run the following commands:
 ```bash
 # Run the full test suite with coverage report
 make test
-# Expected: > 90% coverage (Currently 100%)
 
 # Run static type checking
 make lint
-# Expected: Success: no issues found
 ```
-

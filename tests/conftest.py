@@ -32,12 +32,13 @@ def ice_type():
     return Type("Ice")
 
 
-# Fixture: Bulbasaur
+# Fixture: Bulbasaur (base stats from Bulbasaur lvl 5)
 @pytest.fixture
 def bulbasaur(grass_type, poison_type):
     return Pokemon(
-        name="Bulbasaur", level=5, hp=45, max_hp=45,
-        attack=49, defense=49, sp_attack=65, sp_defense=65, speed=45,
+        name="Bulbasaur", level=5,
+        base_hp=45, base_attack=49, base_defense=49,
+        base_sp_attack=65, base_sp_defense=65, base_speed=45,
         primary_type=grass_type, secondary_type=poison_type
     )
 
@@ -45,8 +46,9 @@ def bulbasaur(grass_type, poison_type):
 @pytest.fixture
 def squirtle(water_type):
     return Pokemon(
-        name="Squirtle", level=5, hp=44, max_hp=44,
-        attack=48, defense=65, sp_attack=50, sp_defense=64, speed=43,
+        name="Squirtle", level=5,
+        base_hp=44, base_attack=48, base_defense=65,
+        base_sp_attack=50, base_sp_defense=64, base_speed=43,
         primary_type=water_type, secondary_type=None
     )
 
@@ -54,8 +56,9 @@ def squirtle(water_type):
 @pytest.fixture
 def charmander(fire_type):
     return Pokemon(
-        name="Charmander", level=5, hp=39, max_hp=39,
-        attack=52, defense=43, sp_attack=60, sp_defense=50, speed=65,
+        name="Charmander", level=5,
+        base_hp=39, base_attack=52, base_defense=43,
+        base_sp_attack=60, base_sp_defense=50, base_speed=65,
         primary_type=fire_type, secondary_type=None
     )
 
@@ -63,8 +66,9 @@ def charmander(fire_type):
 @pytest.fixture
 def pikachu(electric_type):
     return Pokemon(
-        name="Pikachu", level=5, hp=39, max_hp=39,
-        attack=52, defense=43, sp_attack=60, sp_defense=50, speed=65,
+        name="Pikachu", level=5,
+        base_hp=35, base_attack=55, base_defense=40,
+        base_sp_attack=50, base_sp_defense=50, base_speed=90,
         primary_type=electric_type, secondary_type=None
     )
 
@@ -72,8 +76,9 @@ def pikachu(electric_type):
 @pytest.fixture
 def vanilux(ice_type):
     return Pokemon(
-        name="Vanilux", level=5, hp=39, max_hp=39,
-        attack=52, defense=43, sp_attack=60, sp_defense=50, speed=65,
+        name="Vanilux", level=5,
+        base_hp=71, base_attack=95, base_defense=85,
+        base_sp_attack=110, base_sp_defense=95, base_speed=79,
         primary_type=ice_type, secondary_type=None
     )
 
@@ -81,35 +86,38 @@ def vanilux(ice_type):
 @pytest.fixture
 def sniper_vanilux(ice_type):
     return Pokemon(
-        name="Sniper Vanilux", level=5, hp=39, max_hp=39,
-        attack=52, defense=43, sp_attack=60, sp_defense=50, speed=65,
+        name="Sniper Vanilux", level=5,
+        base_hp=71, base_attack=95, base_defense=85,
+        base_sp_attack=110, base_sp_defense=95, base_speed=79,
         primary_type=ice_type, secondary_type=None,
-        current_move=None,attack_stage=0,defense_stage=0,
-        sp_attack_stage=0,sp_defense_stage=0, speed_stage=0,
-        ability="Sniper"
+        current_move=None, attack_stage=0, defense_stage=0,
+        sp_attack_stage=0, sp_defense_stage=0, speed_stage=0,
     )
 
 # Fixture: ultra boosted charmander
 @pytest.fixture
 def ultra_boosted_charmander(ice_type):
     return Pokemon(
-        name="Ultra Boosted Charmander", level=5, hp=39, max_hp=39,
-        attack=52, defense=43, sp_attack=60, sp_defense=50, speed=65,
+        name="Ultra Boosted Charmander", level=5,
+        base_hp=39, base_attack=52, base_defense=43,
+        base_sp_attack=60, base_sp_defense=50, base_speed=65,
         primary_type=ice_type, secondary_type=None,
-        current_move=None,attack_stage=6,defense_stage=-5,
-        sp_attack_stage=6,sp_defense_stage=-5, speed_stage=6,
-        ability="Sniper"
+        current_move=None, attack_stage=6, defense_stage=-5,
+        sp_attack_stage=6, sp_defense_stage=-5, speed_stage=6,
     )
 
 
 # Fixture: dead_pikachu
 @pytest.fixture
 def dead_pikachu(electric_type):
-    return Pokemon(
-        name="Pikachu", level=5, hp=0, max_hp=39,
-        attack=52, defense=43, sp_attack=60, sp_defense=50, speed=65,
+    p = Pokemon(
+        name="Pikachu", level=5,
+        base_hp=35, base_attack=55, base_defense=40,
+        base_sp_attack=50, base_sp_defense=50, base_speed=90,
         primary_type=electric_type, secondary_type=None
     )
+    p.hp = 0
+    return p
 
 # Fixture: dead_team
 @pytest.fixture
@@ -136,7 +144,7 @@ def misty_team(bulbasaur):
 @pytest.fixture
 def ash(ash_team):
     return Trainer(
-        name="Ash", 
+        name="Ash",
         team=ash_team
     )
 
@@ -144,15 +152,15 @@ def ash(ash_team):
 @pytest.fixture
 def misty(misty_team):
     return Trainer(
-        name="Misty", 
+        name="Misty",
         team=misty_team
     )
 
 # Fixture: Battle
 @pytest.fixture
-def battle(ash,misty):
+def battle(ash, misty):
     return Battle(
-        trainer1=ash, 
+        trainer1=ash,
         trainer2=misty
     )
 

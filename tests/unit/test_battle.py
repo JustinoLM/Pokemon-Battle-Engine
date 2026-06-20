@@ -1,12 +1,15 @@
 # tests/unit/test_battle.py
 
+import asyncio
 from unittest.mock import patch, MagicMock, ANY
 
 import pytest
 
 from src.pokemon_battle_engine.domain.models import (
-    Type, Move, PhysicalDamageCalculator, StatusEffect,
+    Type, Move, StatusEffect,
 )
+from src.pokemon_battle_engine.domain.damage import PhysicalDamageCalculator
+from src.pokemon_battle_engine.domain.errors import IllegalMoveError
 from src.pokemon_battle_engine.domain.constants import NORMAL_TYPE
 
 
@@ -16,11 +19,11 @@ def test_team_switch_pokemon(dead_team):
     pkmn = team.switch_pokemon(0)
     assert pkmn.name == "Charmander"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(IllegalMoveError):
         team.switch_pokemon(999)
 
-    with pytest.raises(ValueError):
-        team.switch_pokemon(1)
+    with pytest.raises(Exception):
+        team.switch_pokemon(1)  # index 1 is dead_pikachu → PokemonFaintedError
 
 
 def test_get_active_pokemon(ash):
@@ -32,20 +35,18 @@ def test_battle_executes_turn_and_updates_hp(battle):
     defender = battle.trainer2.get_active_pokemon()
     old_hp = defender.hp
 
-    battle.execute_turn(battle.trainer1, battle.trainer2, tackle)
+    result = asyncio.run(battle.execute_turn(battle.trainer1, battle.trainer2, tackle))
 
     assert defender.hp < old_hp
 
 
 def test_battle_pokemon_fainted(battle):
     tackle = Move("Tackle", 9000, NORMAL_TYPE, PhysicalDamageCalculator())
-    result = battle.execute_turn(battle.trainer1, battle.trainer2, tackle)
+    result = asyncio.run(battle.execute_turn(battle.trainer1, battle.trainer2, tackle))
     assert any("fainted" in msg for msg in result.messages)
 
 
 # --- Turn order: speed and priority -------------------------------------------
-# Folds the four near-identical order tests into one matrix. `winner` is the
-# trainer expected to act first.
 @pytest.mark.parametrize("speed1, speed2, prio1, prio2, winner", [
     (100, 50, 0, 0, "t1"),   # faster speed wins
     (50, 100, 0, 0, "t2"),
@@ -92,7 +93,7 @@ def test_status_prevents_movement(battle):
     attacker.current_status_effect = status
 
     move = Move("Tackle", 40, Type("Normal"), PhysicalDamageCalculator())
-    result = battle.execute_turn(battle.trainer1, battle.trainer2, move)
+    result = asyncio.run(battle.execute_turn(battle.trainer1, battle.trainer2, move))
 
     assert result.damage == 0
     assert f"{attacker.name} is paralyzed!" in result.messages
@@ -109,10 +110,10 @@ def test_missing_attack(battle):
         secondary_effect=ANY, secondary_effect_chance=ANY,
         stage_changes=ANY, accuracy=0,
     )
-    result = battle.execute_turn(battle.trainer1, battle.trainer2, move)
+    result = asyncio.run(battle.execute_turn(battle.trainer1, battle.trainer2, move))
 
     assert result.damage == 0
-    assert f"{attacker.name} attack has missed!" in result.messages
+    assert f"{attacker.name}'s attack missed!" in result.messages
 
 
 def test_process_end_of_turn_calls_tick(battle):

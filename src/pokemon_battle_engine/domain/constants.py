@@ -1,4 +1,4 @@
-# src/pokemon_battle/domain/constants.py
+# src/pokemon_battle_engine/domain/constants.py
 
 from dataclasses import dataclass
 
@@ -25,6 +25,7 @@ DRAGON_TYPE = Type("Dragon")
 DARK_TYPE = Type("Dark")
 STEEL_TYPE = Type("Steel")
 FAIRY_TYPE = Type("Fairy")
+NO_TYPE = Type("Nontype")
 
 TYPE_CHART = {
     "Normal": {
@@ -214,4 +215,53 @@ CRIT_CHANCE = {
     2: 50.0,
     3: 100.0,
     4: 100.0
+}
+
+# --- Weather Constants ---
+@dataclass(frozen=True)
+class Weather:
+    name: str
+    water_boost: float = 1.0
+    fire_boost: float = 1.0
+    rock_boost: float = 1.0
+    water_resist: float = 1.0
+    fire_resist: float = 1.0
+    ice_resist: float = 1.0
+
+RAIN = Weather(name="rain", water_boost=1.5, water_resist=1.0, fire_resist=0.5)
+SUN = Weather(name="sun", fire_boost=1.5, water_resist=0.5, fire_resist=1.0)
+SANDSTORM = Weather(name="sandstorm", rock_boost=2.0) # Affects Rock types
+HAIL = Weather(name="hail", ice_resist=1.5) # Ice takes damage
+CLEAR = Weather(name="clear")
+
+WEATHER_MAP = {
+    "rain": RAIN,
+    "sun": SUN,
+    "sandstorm": SANDSTORM,
+    "hail": HAIL
+}
+
+# src/pokemon_battle/domain/constants.py
+
+# --- Terrain Constants ---
+@dataclass(frozen=True)
+class Terrain:
+    name: str
+    electric_boost: bool = False
+    grassy_boost: bool = False
+    psychic_boost: bool = False
+    misty_boost: bool = False
+    # Grassy Terrain heal logic handled in battle.py
+    # Misty Terrain status immunity handled in battle.py
+
+ELECTRIC_TERRAIN = Terrain(name="electric", electric_boost=True)
+GRASSY_TERRAIN = Terrain(name="grassy", grassy_boost=True)
+PSYCHIC_TERRAIN = Terrain(name="psychic", psychic_boost=True)
+MISTY_TERRAIN = Terrain(name="misty", misty_boost=True)
+
+TERRAIN_MAP = {
+    "electric": ELECTRIC_TERRAIN,
+    "grassy": GRASSY_TERRAIN,
+    "psychic": PSYCHIC_TERRAIN,
+    "misty": MISTY_TERRAIN
 }

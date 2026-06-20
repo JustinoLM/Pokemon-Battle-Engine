@@ -4,12 +4,24 @@ from unittest.mock import patch
 
 import pytest
 
-from src.pokemon_battle_engine.domain.models import (
+from src.pokemon_battle_engine.domain.models import Pokemon
+from src.pokemon_battle_engine.domain.damage import PhysicalDamageCalculator
+from src.pokemon_battle_engine.domain.status import (
     BurnEffect, ParalyzeEffect, SleepEffect, FreezeEffect,
     PoisonEffect, BadlyPoisonedEffect,
-    PhysicalDamageCalculator, Pokemon,
 )
-from src.pokemon_battle_engine.domain.constants import FIRE_TYPE
+from src.pokemon_battle_engine.domain.constants import FIRE_TYPE, WATER_TYPE
+
+
+@pytest.fixture
+def squirtle_l50():
+    """Squirtle at level 50 so max_hp//16 > 0 for status damage tests."""
+    return Pokemon(
+        name="Squirtle", level=50,
+        base_hp=44, base_attack=48, base_defense=65,
+        base_sp_attack=50, base_sp_defense=64, base_speed=43,
+        primary_type=WATER_TYPE, secondary_type=None
+    )
 
 
 # --- tick(): immunity by type -------------------------------------------------
@@ -38,12 +50,12 @@ def test_effect_is_blocked_by_type_immunity(effect_cls, poke_fixture, request):
     (PoisonEffect, "poison"),
     (BadlyPoisonedEffect, "badly"),
 ])
-def test_damaging_effect_hurts_target(effect_cls, keyword, squirtle):
-    old_hp = squirtle.hp
+def test_damaging_effect_hurts_target(effect_cls, keyword, squirtle_l50):
+    old_hp = squirtle_l50.hp
 
-    message = effect_cls().tick(squirtle)
+    message = effect_cls().tick(squirtle_l50)
 
-    assert squirtle.hp < old_hp
+    assert squirtle_l50.hp < old_hp
     assert keyword in message
 
 
@@ -79,8 +91,9 @@ def test_burn_halves_physical_damage(charmander, squirtle):
     calculator = PhysicalDamageCalculator()
 
     burned = Pokemon(
-        name="Burned Charmander", level=5, hp=39, max_hp=39,
-        attack=52, defense=43, sp_attack=60, sp_defense=50, speed=65,
+        name="Burned Charmander", level=5,
+        base_hp=39, base_attack=52, base_defense=43,
+        base_sp_attack=60, base_sp_defense=50, base_speed=65,
         primary_type=FIRE_TYPE, secondary_type=None,
     )
     burned.current_status_effect = BurnEffect()

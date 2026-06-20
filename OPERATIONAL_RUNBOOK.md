@@ -1,45 +1,54 @@
+
 # Pokemon Battle Engine - Operational Runbook
 
 ## 1. How to Start the Server
-Start the battle engine in the background with auto-reload enabled.
 
 ```bash
-# Using the Makefile
-make run
+#  Run the server (host 0.0.0.0 makes it accessible externally)
+uv run uvicorn pokemon_battle_engine.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## 2. How to Check Status
-Verify the `uvicorn` process is running.
+**Recommended Tmux Layout:**
+*   Split the window into 3 panes (`Ctrl+b` then `%` for vertical, `"` for horizontal).
+*   Pane 1: Run Uvicorn.
+*   Pane 2: Run `tail -f logs/battle.log`.
+*   Pane 3: Run `htop` (monitor resources).
+
+
+## 2. How to Monitor Logs
+The system uses **Structured Logging** (JSON format). Monitor battle events and errors in real-time.
 
 ```bash
-# Find the Process ID (PID)
-ps aux | grep uvicorn
-```
-
-## 3. How to Monitor Logs
-Tail the log file in real-time to see battle events.
-
-```bash
-# Follow the file
+# View all logs in real-time
 tail -f logs/battle.log
 ```
-*(Note: Logging is not implemented yet).*
 
-## 4. How to Stop the Server
-Gracefully stop the service.
-
+**Filtering Logs (Useful for debugging):**
 ```bash
-# 1. Find the PID
-ps aux | grep uvicorn
+# Only see HTTP requests
+tail -f logs/battle.log | grep "request"
 
-# 2. Kill the process
-kill <PID>
+# Only see Errors
+tail -f logs/battle.log | grep "level\":\"error\""
 ```
 
-## 5. Troubleshooting: Port Already in Use
-If you see `OSError: [Errno 48] Address already in use`:
+## 3. How to Test the API (CLI)
+Use `curl` to interact with the API endpoints directly from the command line, which is useful for automation and testing without the browser.
 
+**Create a Battle:**
 ```bash
-# Find what is using port 8000
-lsof -i :8000
+curl -X POST http://localhost:8000/battles \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trainer1": {"name": "Red", "team": ["pikachu"]},
+    "trainer2": {"name": "Blue", "team": ["charizard"]}
+  }'
+```
+
+**Execute a Turn:**
+```bash
+# Replace <BATTLE_ID> with the ID from the previous response
+curl -X POST http://localhost:8000/battles/<BATTLE_ID>/turn \
+  -H "Content-Type: application/json" \
+  -d '{"attacker_name": "Red", "move_name": "tackle"}'
 ```

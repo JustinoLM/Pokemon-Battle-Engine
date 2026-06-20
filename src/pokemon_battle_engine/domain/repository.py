@@ -1,4 +1,4 @@
-# src/pokemon_battle/domain/repository.py
+# src/pokemon_battle_engine/domain/repository.py
 
 from typing import TypeVar, Generic, Dict, Optional
 from .models import Pokemon

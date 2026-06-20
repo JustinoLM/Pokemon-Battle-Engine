@@ -1,43 +1,48 @@
-# src/pokemon_battle/main.py
+# src/pokemon_battle_engine/main.py
 
-import random # <--- NECESARIO para la selección aleatoria
+import random
 
 from pokemon_battle_engine.domain.models import (
-    Pokemon, Move, 
+    Move, 
     PhysicalDamageCalculator, SpecialDamageCalculator, 
     ModifyStage, ParalyzeEffect, StatusDamageCalculator
 )
 from pokemon_battle_engine.domain.constants import (
-    ELECTRIC_TYPE, NORMAL_TYPE, FIRE_TYPE, ROCK_TYPE, FLYING_TYPE
+    ELECTRIC_TYPE, NORMAL_TYPE, ROCK_TYPE
 )
 from pokemon_battle_engine.domain.battle import Team, Trainer, Battle
+from pokemon_battle_engine.services.battle_service import BattleService
+
+import asyncio
+from pokemon_battle_engine.infra.pokeapi_client import PokeAPIClient
+from pokemon_battle_engine.infra.pokemon_mapper import map_pokemon_from_api
+
 
 def print_turn_result(result, move):
-    """Helper para imprimir el estado de la batalla de forma legible"""
-    print(f"  > {result.attacker_name} used {move.name}!") # <--- Mostramos qué movimiento salió
+    print(f"  > {result.attacker_name} used {move.name}!")
     print(f"  > Damage dealt: {result.damage}")
     
-    # Imprimir mensajes internos (Críticos, Cambios de Estado)
     for msg in result.messages:
         print(f"  [!] {msg}")
         
     print(f"  > {result.defender_name} HP: {result.defender_hp}") # Mostramos HP actual
 
-def main():
+async def main():
     print("=== RANDOM POKEMON BATTLE ENGINE v1.0 ===\n")
 
     # --- 1. Setup Pokemon ---
-    zapdos = Pokemon(
-        name="Zapdos", level=50, hp=200, max_hp=200,
-        attack=90, defense=80, sp_attack=160, sp_defense=90, speed=120,
-        primary_type=FLYING_TYPE, secondary_type= ELECTRIC_TYPE
-    )
+    client = PokeAPIClient()
 
-    charizard = Pokemon(
-        name="Heat Rottom", level=50, hp=250, max_hp=250,
-        attack=130, defense=100, sp_attack=150, sp_defense=100, speed=100,
-        primary_type=FIRE_TYPE, secondary_type=ELECTRIC_TYPE
-    )
+    # -- Fetching data --
+    zapdos_data = await client.get_pokemon("zapdos")
+    charizard_data = await client.get_pokemon("charizard")
+
+    # -- Map data to domain objects --
+    zapdos = map_pokemon_from_api(zapdos_data)
+    charizard = map_pokemon_from_api(charizard_data)
+
+    zapdos.ivs = {"hp":31, "atk": 0, "def": 31, "spa": 31, "spd": 25, "spe":31}
+    zapdos.__post_init__()
 
     # --- 2. Setup Moves ---
     
@@ -76,10 +81,15 @@ def main():
     ash_team = Team(members=[zapdos], active_pokemon_index=0)
     rival_team = Team(members=[charizard], active_pokemon_index=0)
 
+    zapdos.move_pool = available_moves
+    charizard.move_pool = available_moves
+
     ash = Trainer(name="Ash", team=ash_team)
     rival = Trainer(name="Rival", team=rival_team)
 
     battle = Battle(trainer1=ash, trainer2=rival)
+    battle_service = BattleService(battle)
+
 
     # --- 4. Loop de Combate ---
     print(f"¡{ash.name} vs {rival.name}!\n")
@@ -99,7 +109,11 @@ def main():
         move2 = random.choice(available_moves)
 
         # 3. Turno del Atacante Rápido
-        result1 = battle.execute_turn(attacker=first_trainer, defender=second_trainer, move=move1)
+        result1 = await battle_service.execute_turn(
+            attacker_name =first_trainer.name,
+            defender_name=second_trainer.name,
+            move_name=move1.name
+            )
         print_turn_result(result1, move1)
         
         # LIMPIEZA 1: Borramos los mensajes de este ataque para que no se arrastren
@@ -110,7 +124,10 @@ def main():
             break
 
         # 4. Turno del Atacante Lento
-        result2 = battle.execute_turn(attacker=second_trainer, defender=first_trainer, move=move2)
+        result2 = await battle_service.execute_turn(
+            attacker_name=second_trainer.name,
+            defender_name=first_trainer.name,
+            move_name=move2.name)
         print_turn_result(result2, move2)
         
         # LIMPIEZA 2: Borramos los mensajes del segundo ataque
@@ -129,5 +146,14 @@ def main():
         battle.messages.clear() # Limpiamos para el siguiente turno global
         print("\n" + "-"*30 + "\n")
 
+# Fast PokeAPIClient test
+async def test_api():
+    client = PokeAPIClient()
+    data = await client.get_pokemon("pikachu")
+    print(f"Nombre: {data['name']}")
+    print(f"ID: {data['id']}")
+    print(f"Movimientos disponibles: {len(data['moves'])}")
+
 if __name__ == "__main__":
-    main()
+    #asyncio.run(test_api())
+    asyncio.run(main())

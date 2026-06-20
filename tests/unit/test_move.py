@@ -1,20 +1,16 @@
 #tests/unit/test_move.py
+import asyncio
 
-from src.pokemon_battle_engine.domain.models import (
-    Type, Move, PhysicalDamageCalculator, 
-    SpecialDamageCalculator, StatusDamageCalculator,
-    SleepEffect
-    )
+from src.pokemon_battle_engine.domain.models import (Type, Move)
+from src.pokemon_battle_engine.domain.damage import (
+    PhysicalDamageCalculator, SpecialDamageCalculator, StatusDamageCalculator,
+)
+from src.pokemon_battle_engine.domain.status import SleepEffect
 from src.pokemon_battle_engine.domain.constants import (
-    TYPE_CHART, STAGE_MULTIPLIERS,
-	FAIRY_TYPE, FIRE_TYPE, FIGHTING_TYPE, FLYING_TYPE,
-	BUG_TYPE, DARK_TYPE, DRAGON_TYPE, ELECTRIC_TYPE,
-	GHOST_TYPE, GRASS_TYPE,GROUND_TYPE, ICE_TYPE,
-	NORMAL_TYPE, POISON_TYPE, PSYCHIC_TYPE, ROCK_TYPE,
-	STEEL_TYPE, WATER_TYPE
+    NORMAL_TYPE
     )
 
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock
 import pytest
 
 ## Test normal
@@ -47,7 +43,6 @@ def test_effectivity_passed_to_calculator(charmander, bulbasaur, fire_type, effe
     assert ember.damage_calculator.calculate.call_args.kwargs["effectivity"] == 2.0
 
 def test_secondary_effect(battle):
-    attacker = battle.trainer1.get_active_pokemon()
     defender = battle.trainer2.get_active_pokemon()
 
     dummy_move = Move(
@@ -59,9 +54,9 @@ def test_secondary_effect(battle):
         secondary_effect_chance=100
     )
 
-    result = battle.execute_turn(
+    asyncio.run(battle.execute_turn(
         battle.trainer1,
         battle.trainer2,
-        dummy_move  
-    )
+        dummy_move
+    ))
     assert isinstance(defender.current_status_effect, SleepEffect)
